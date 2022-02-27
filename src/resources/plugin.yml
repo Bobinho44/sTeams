@@ -5,7 +5,7 @@ author: Bobinho
 api-version: 1.18
 depend:
   - OpenInv
-  - WorldBorderAPI
+  - WorldEdit
 commands:
   delhome:
     description: Deletes home.
