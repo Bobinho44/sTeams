@@ -8,8 +8,8 @@ import java.util.Arrays;
 
 public enum Chat {
     PUBLIC("", ChatColor.GOLD + "Public"),
-    ALLY(ChatColor.YELLOW + "(" + ChatColor.BLUE + "AC" + ChatColor.YELLOW + ")", ChatColor.BLUE + "Ally"),
-    TEAM(ChatColor.YELLOW + "(" + ChatColor.GREEN + "TC" + ChatColor.YELLOW + ")", ChatColor.GREEN + "Team");
+    ALLY(ChatColor.YELLOW + "(" + ChatColor.BLUE + "AC" + ChatColor.YELLOW + ") ", ChatColor.BLUE + "Ally"),
+    TEAM(ChatColor.YELLOW + "(" + ChatColor.GREEN + "TC" + ChatColor.YELLOW + ") ", ChatColor.GREEN + "Team");
 
     private final String prefix;
     private final String name;

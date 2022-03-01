@@ -3,8 +3,10 @@ package fr.bobinho.steams;
 import co.aikar.commands.PaperCommandManager;
 import fr.bobinho.steams.commands.team.TeamCommand;
 import fr.bobinho.steams.commands.team.TeamsCommand;
+import fr.bobinho.steams.listeners.ChatListener;
 import fr.bobinho.steams.listeners.TeamListener;
 import fr.bobinho.steams.utils.settings.BSettings;
+import fr.bobinho.steams.utils.team.TeamManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -53,6 +55,8 @@ public class sTeamsCore extends JavaPlugin {
 
         //Registers files settings
         teamsSettings = new BSettings("teams");
+
+        TeamManager.loadTeams();
     }
 
     /**
@@ -60,6 +64,8 @@ public class sTeamsCore extends JavaPlugin {
      */
     public void onDisable() {
         Bukkit.getConsoleSender().sendMessage(ChatColor.AQUA + "[sTeams] Unloading the plugin...");
+
+        TeamManager.saveTeams();
     }
 
     /**
@@ -69,6 +75,7 @@ public class sTeamsCore extends JavaPlugin {
 
         //Registers test listener
         Bukkit.getServer().getPluginManager().registerEvents(new TeamListener(), this);
+        Bukkit.getServer().getPluginManager().registerEvents(new ChatListener(), this);
 
         Bukkit.getConsoleSender().sendMessage(ChatColor.AQUA + "Successfully loaded listeners");
     }

@@ -105,6 +105,12 @@ public class TeamCommand extends BaseCommand {
             return;
         }
 
+        //Checks if target and sender are the same player
+        if (sender.equals(target)) {
+            sender.sendMessage(ChatColor.RED + "You can't promote yourself!");
+            return;
+        }
+
         //Checks if target have team
         if (!TeamManager.isInTeam(target.getUniqueId())) {
             sender.sendMessage(ChatColor.RED + target.getName() + " is not in a team!");
@@ -151,6 +157,12 @@ public class TeamCommand extends BaseCommand {
         //Checks if sender have team
         if (!TeamManager.isInTeam(sender.getUniqueId())) {
             sender.sendMessage(ChatColor.RED + "You are not in a team!");
+            return;
+        }
+
+        //Checks if target and sender are the same player
+        if (sender.equals(target)) {
+            sender.sendMessage(ChatColor.RED + "You can't demote yourself!");
             return;
         }
 
@@ -324,12 +336,12 @@ public class TeamCommand extends BaseCommand {
 
         //Checks if sender already has a join request
         if (!RequestManager.hasJoinRequest(target, sender.getUniqueId())) {
-            sender.sendMessage(ChatColor.RED + "You have not received an invitation from the " + target.getName() + "TEAM!");
+            sender.sendMessage(ChatColor.RED + "You have not received an invitation from the " + target.getName() + " team!");
             return;
         }
 
         //Sends message
-        sender.sendMessage(ChatColor.GREEN + sender.getName() + "You have joined the " + target.getName() + " team.");
+        sender.sendMessage(ChatColor.GREEN + "You have joined the " + target.getName() + " team.");
         target.sendMessage(ChatColor.GREEN + sender.getName() + " joined the team.");
 
         //Accepts join request
@@ -400,6 +412,16 @@ public class TeamCommand extends BaseCommand {
         Team team = TeamManager.getTeam(sender.getUniqueId()).get();
         Team target = TeamManager.getTeam(commandTarget).get();
 
+        if (team.equals(target)) {
+            sender.sendMessage(ChatColor.RED + "You cannot be allied with your own team!");
+            return;
+        }
+
+        if (TeamManager.areAllied(team, target)) {
+            sender.sendMessage(ChatColor.RED + "You are already allied with the team " + target.getName() + "!");
+            return;
+        }
+
         //Checks if sender is at least a mod
         if (!TeamManager.isAtLeastMod(sender.getUniqueId())) {
             sender.sendMessage(ChatColor.RED + "You are not at least a mod of your team!");
@@ -468,7 +490,7 @@ public class TeamCommand extends BaseCommand {
 
         //Checks if teams are allied
         if (!TeamManager.areAllied(team, target)) {
-            sender.sendMessage(ChatColor.RED + "You are allied with the " + target.getName() + " team!");
+            sender.sendMessage(ChatColor.RED + "You are not allied with the " + target.getName() + " team!");
             return;
         }
 
@@ -500,16 +522,22 @@ public class TeamCommand extends BaseCommand {
             return;
         }
 
-        Chat chat = commandTarget == null ? Chat.getNextChat(ChatManager.getPlayerChat(sender.getUniqueId())) : Chat.valueOf(commandTarget);
+        Chat chat = commandTarget == null ? Chat.getNextChat(ChatManager.getPlayerChat(sender.getUniqueId())) : Chat.valueOf(commandTarget.toUpperCase());
 
         //Checks if sender has team
-        if (!TeamManager.isInTeam(sender.getUniqueId())) {
+        if (!TeamManager.isInTeam(sender.getUniqueId()) && chat != Chat.PUBLIC) {
+            sender.sendMessage(ChatColor.RED + "You can't change your chat without a team!");
+            return;
+        }
+
+        //Checks if sender has team
+        if (!TeamManager.isInTeam(sender.getUniqueId()) && chat != Chat.PUBLIC) {
             sender.sendMessage(ChatColor.RED + "You can't change your chat without a team!");
             return;
         }
 
         //Skips ally chat
-        if (chat == Chat.PUBLIC && TeamManager.getTeam(sender.getUniqueId()).get().getAllies().size() == 0) {
+        if (chat == Chat.ALLY && TeamManager.getTeam(sender.getUniqueId()).get().getAllies().size() == 0) {
 
             //Checks if sender team has allies
             if (commandTarget != null) {
@@ -582,7 +610,7 @@ public class TeamCommand extends BaseCommand {
         TeamManager.toogleFriendlyFire(team);
 
         //Sends message
-        team.sendMessage(ChatColor.GREEN + "The friendly fire is now activated in your team.");
+        team.sendMessage(ChatColor.GREEN + "The friendly fire is now " + (team.isFriendlyFire() ? "activated" : "deactivated") + " in your team.");
     }
 
     /**
@@ -603,6 +631,12 @@ public class TeamCommand extends BaseCommand {
         //Checks if sender have team
         if (!TeamManager.isInTeam(sender.getUniqueId())) {
             sender.sendMessage(ChatColor.RED + "You are not in a team!");
+            return;
+        }
+
+        //Checks if target and sender are the same player
+        if (sender.equals(target)) {
+            sender.sendMessage(ChatColor.RED + "You can't kick yourself!");
             return;
         }
 

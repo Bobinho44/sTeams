@@ -1,53 +1,10 @@
-name: sUtils
-main: fr.bobinho.sutils.sUtilsCore
+name: sTeams
+main: fr.bobinho.steams.sTeamsCore
 version: 0.0.1
 author: Bobinho
 api-version: 1.18
-depend:
-  - OpenInv
-  - WorldEdit
 commands:
-  delhome:
-    description: Deletes home.
-    usage: /delhome <name>
-    permission: sutils.delhome
-  home:
-    description: Teleports to home.
-    usage: /home
-    permission: sutils.home
-  sethome:
-    description: Creates home.
-    usage: /sethome <name>
-    permission: sutils.sethome
-  setspawn:
-    description: Sets the spawn.
-    usage: /setspawn
-    permission: sutils.setspawn
-  spawn:
-    description: Teleports to the spawn.
-    usage: /spawn
-    permission: sutils.spawn
-  tpa:
-    description: Sends teleportation request.
-    usage: /tpa <player>
-    permission: sutils.tpa
-  tpyes:
-    description: Accepts teleportation request.
-    usage: /tpyes
-    permission: sutils.tpyes
-  echest:
-    description: Opens enderchest.
-    usage: /echest
-    permission: sutils.echest
-  rules:
-    description: Gets rules link.
-    usage: /rules
-    permission: sutils.rules
-  createsafezone:
-    description: Creates safezone.
-    usage: /createsafezone <radius>
-    permission: sutils.createsafezone
-  delsafezone:
-    description: Deletes safezone.
-    usage: /delsafezone
-    permission: sutils.delsafezone
+  team:
+    description: Team commands.
+  teams:
+    description: Team information commands.

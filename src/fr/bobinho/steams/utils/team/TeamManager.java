@@ -1,13 +1,18 @@
 package fr.bobinho.steams.utils.team;
 
+import fr.bobinho.steams.sTeamsCore;
+import fr.bobinho.steams.utils.location.BLocationUtil;
+import fr.bobinho.steams.utils.team.chat.Chat;
+import fr.bobinho.steams.utils.team.chat.ChatManager;
 import org.apache.commons.lang.Validate;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class TeamManager {
 
@@ -50,10 +55,20 @@ public class TeamManager {
         getTeams().add(new Team(name, leader));
     }
 
+    public static Team createTeam(@Nonnull String name) {
+        Validate.notNull(name, "name is null");
+        Validate.isTrue(!isItTeam(name), "name is already used");
+
+        Team team = new Team(name);
+        getTeams().add(team);
+        return team;
+    }
+
     public static void deleteTeam(@Nonnull String name) {
         Validate.notNull(name, "name is null");
         Validate.isTrue(isItTeam(name), "name is not used");
 
+        getTeam(name).get().getMembers().keySet().forEach(member -> leaveTeam(getTeam(name).get(), member));
         getTeams().remove(getTeam(name).get());
     }
 
@@ -70,6 +85,7 @@ public class TeamManager {
         Validate.notNull(member, "member is null");
         Validate.isTrue(isInTeam(member), "member is not in a team");
 
+        ChatManager.setPlayerChat(member, Chat.PUBLIC);
         team.removeMember(member);
     }
 
@@ -78,7 +94,7 @@ public class TeamManager {
         Validate.notNull(kicked, "kicked is null");
         Validate.isTrue(isInTeam(kicker), "kicker is not in a team");
         Validate.isTrue(isInTeam(kicked), "kicked is not in a team");
-        Validate.isTrue(getTeam(kicker).equals(kicked), "kicker and kicked are not in the same team");
+        Validate.isTrue(getTeam(kicker).get().equals(getTeam(kicked).get()), "kicker and kicked are not in the same team");
 
         return getPlayerRole(kicker).getLevel() >= getPlayerRole(kicked).getLevel();
     }
@@ -95,6 +111,13 @@ public class TeamManager {
         Validate.isTrue(isInTeam(player), "player is not in a team");
 
         return getTeam(player).get().getMembers().get(player);
+    }
+
+
+    public static String getPlayerRoleSymbol(@Nonnull UUID player) {
+        Validate.notNull(player, "player is null");
+
+        return isInTeam(player) ? getPlayerRole(player).getSymbol() : "";
     }
 
     public static boolean isAtLeastLeader(@Nonnull UUID player) {
@@ -204,6 +227,92 @@ public class TeamManager {
         Validate.notNull(team, "team is null");
 
         team.toogleFriendlyFire();
+    }
+
+    public static boolean isAllied(@Nonnull Team team, @Nonnull UUID player) {
+        Validate.notNull(team, "team is null");
+        Validate.notNull(player, "player is null");
+
+        return team.getAllies().stream().map(Team::getMembers).anyMatch(members -> members.keySet().stream().anyMatch(member -> member.equals(player)));
+    }
+
+    public static boolean isTeammate(@Nonnull Team team, @Nonnull UUID player) {
+        Validate.notNull(team, "team is null");
+        Validate.notNull(player, "player is null");
+
+        return team.getMembers().keySet().stream().anyMatch(member -> member.equals(player));
+    }
+
+    public static List<Player> getPlayers(@Nonnull UUID basePlayer, @Nonnull Chat chat) {
+        Validate.notNull(basePlayer, "player is null");
+        Validate.notNull(chat, "chat is null");
+
+        Optional<Team> team = getTeam(basePlayer);
+
+        if (team.isPresent() && chat == Chat.ALLY) {
+            return Bukkit.getOnlinePlayers().stream()
+                    .filter(player -> isAllied(team.get(), player.getUniqueId()) || isTeammate(team.get(), player.getUniqueId())).collect(Collectors.toList());
+        }
+
+        if (team.isPresent() && chat == Chat.TEAM) {
+            return Bukkit.getOnlinePlayers().stream().filter(player -> isTeammate(team.get(), player.getUniqueId())).collect(Collectors.toList());
+        }
+
+        return new ArrayList<>(Bukkit.getOnlinePlayers());
+    }
+
+    public static void loadTeams() {
+        YamlConfiguration configuration = sTeamsCore.getTeamsSettings().getConfiguration();
+
+        //Loads teams
+        for (String teamName : configuration.getKeys(false)) {
+
+            Team team = createTeam(teamName);
+            for (String memberUUID : Objects.requireNonNull(configuration.getConfigurationSection(teamName + ".members")).getKeys(false)) {
+                team.addMember(UUID.fromString(memberUUID), TeamRole.valueOf(configuration.getString(teamName + ".members." + memberUUID)));
+            }
+            if (configuration.getString(teamName + ".HQ") != null) {
+                team.setHQ(BLocationUtil.getAsLocation(configuration.getString(teamName + ".HQ", "world:0:0:0:0:0")));
+            }
+            if (configuration.getBoolean(teamName + ".isFriendlyFire")) {
+                team.toogleFriendlyFire();
+            }
+        }
+
+        for (Team team : getTeams()) {
+            List<String> alliesName = configuration.getStringList(team.getName() + ".allies");
+
+            for (String allyName : alliesName) {
+                if (!areAllied(team, getTeam(allyName).get())) {
+                    createAlly(team, getTeam(allyName).get());
+                }
+            }
+        }
+    }
+
+    public static void saveTeams() {
+        YamlConfiguration configuration = sTeamsCore.getTeamsSettings().getConfiguration();
+        sTeamsCore.getTeamsSettings().clear();
+
+        //Saves teams
+        for (Team team : getTeams()) {
+
+            //Saves members
+            for (Map.Entry<UUID, TeamRole> member : team.getMembers().entrySet()) {
+                configuration.set(team.getName() + ".members." + member.getKey(), member.getValue().name());
+            }
+
+            //Saves allies
+            configuration.set(team.getName() + ".allies", team.getAllies().stream().map(Team::getName).collect(Collectors.toList()));
+
+            //Saves HQ
+            configuration.set(team.getName() + ".HQ", team.getHQ() == null ? null : BLocationUtil.getAsString(team.getHQ()));
+
+            //Saves friendly fire statue
+            configuration.set(team.getName() + ".isFriendlyFire", team.isFriendlyFire());
+        }
+
+        sTeamsCore.getTeamsSettings().save();
     }
 
 }

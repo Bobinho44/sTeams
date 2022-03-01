@@ -26,6 +26,12 @@ public class Team {
         this.members.put(leader, TeamRole.LEADER);
     }
 
+    public Team(@Nonnull String name) {
+        Validate.notNull(name, "name is null");
+
+        this.name = name;
+    }
+
     public String getName() {
         return name;
     }
@@ -38,14 +44,14 @@ public class Team {
         Validate.notNull(member, "member is null");
 
         if (Bukkit.getPlayer(member.getKey()) == null) {
-            return ChatColor.GRAY + Bukkit.getOfflinePlayer(member.getKey()).getName() + member.getValue().getSymbol();
+            return ChatColor.GRAY + member.getValue().getSymbol() + Bukkit.getOfflinePlayer(member.getKey()).getName();
         }
 
-        return ChatColor.GREEN + Bukkit.getPlayer(member.getKey()).getName() + member.getValue().getSymbol();
+        return ChatColor.GREEN + member.getValue().getSymbol() + Objects.requireNonNull(Bukkit.getPlayer(member.getKey())).getName();
     }
 
     public String getMembersAsString() {
-        return getMembers().entrySet().stream().map(member -> getMemberName(member)).collect(Collectors.joining(", "));
+        return getMembers().entrySet().stream().map(this::getMemberName).collect(Collectors.joining(ChatColor.GRAY + ", "));
     }
 
     public List<UUID> getOnlineMembers() {
@@ -113,7 +119,7 @@ public class Team {
         Validate.notNull(message, "message is null");
 
         getMembers().keySet().stream().filter(member -> Bukkit.getPlayer(member) != null).collect(Collectors.toList())
-                .forEach(member -> Bukkit.getPlayer(member).sendMessage(message));
+                .forEach(member -> Objects.requireNonNull(Bukkit.getPlayer(member)).sendMessage(message));
     }
     /**
      * {@inheritDoc}
@@ -124,7 +130,7 @@ public class Team {
             return false;
         }
         Team testedTeam = (Team) o;
-        return testedTeam.getName().equalsIgnoreCase(((Team) o).getName());
+        return testedTeam.getName().equalsIgnoreCase(getName());
     }
 
 }
