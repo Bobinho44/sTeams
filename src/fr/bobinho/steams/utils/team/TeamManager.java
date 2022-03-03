@@ -68,7 +68,7 @@ public class TeamManager {
         Validate.notNull(name, "name is null");
         Validate.isTrue(isItTeam(name), "name is not used");
 
-        getTeam(name).get().getMembers().keySet().forEach(member -> leaveTeam(getTeam(name).get(), member));
+        getTeam(name).get().getMembers().keySet().stream().collect(Collectors.toList()).forEach(member -> leaveTeam(getTeam(name).get(), member));
         getTeams().remove(getTeam(name).get());
     }
 
