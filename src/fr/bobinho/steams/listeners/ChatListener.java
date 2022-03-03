@@ -1,5 +1,6 @@
 package fr.bobinho.steams.listeners;
 
+import fr.bobinho.steams.sTeamsCore;
 import fr.bobinho.steams.utils.team.Team;
 import fr.bobinho.steams.utils.team.TeamManager;
 import fr.bobinho.steams.utils.team.chat.Chat;
@@ -20,11 +21,11 @@ public class ChatListener implements Listener {
 
     private String getTeamAsString(@Nonnull Optional<Team> team, @Nonnull Player viewer) {
         if (team.isPresent() && TeamManager.isAllied(team.get(), viewer.getUniqueId())) {
-            return ChatColor.GRAY + "[" + team.get().getName() + "] ";
+            return ChatColor.BLUE + "[" + team.get().getName() + "] ";
         }
 
         if (team.isPresent() && TeamManager.isTeammate(team.get(), viewer.getUniqueId())) {
-            return ChatColor.BLUE + "[" + team.get().getName() + "] ";
+            return ChatColor.DARK_GREEN + "[" + team.get().getName() + "] ";
         }
 
         return team.map(value -> ChatColor.RED + "[" + value.getName() + "] ").orElse("");
@@ -37,12 +38,13 @@ public class ChatListener implements Listener {
 
         List<Player> viewers = TeamManager.getPlayers(e.getPlayer().getUniqueId(), chat);
         String chatPrefix = chat.getPrefix();
-        String prefix = LuckPermsProvider.get().getPlayerAdapter(Player.class).getUser(e.getPlayer()).getCachedData().getMetaData().getPrefix();
+        String prefix = sTeamsCore.getLuckPerm().getUser(e.getPlayer()).getCachedData().getMetaData().getPrefix();
         String player = TeamManager.getPlayerRoleSymbol(e.getPlayer().getUniqueId()) + e.getPlayer().getName();
         String message = ChatColor.translateAlternateColorCodes('&', LegacyComponentSerializer.legacyAmpersand().serialize(e.message()));
         viewers.forEach(viewer -> viewer.sendMessage(chatPrefix +
                 getTeamAsString(TeamManager.getTeam(e.getPlayer().getUniqueId()), viewer) + ChatColor.RESET +
-                (prefix == null ? "" : prefix + " ") + (chat == Chat.PUBLIC ? "" : (chat == Chat.ALLY ? ChatColor.GRAY : ChatColor.BLUE)) +
+                (prefix == null ? "" : ChatColor.translateAlternateColorCodes('&', prefix) + " ") +
+                (chat == Chat.PUBLIC ? "" : (chat == Chat.ALLY ? ChatColor.GRAY : ChatColor.BLUE)) +
                 player + " : " +
                 message));
     }

@@ -7,9 +7,13 @@ import fr.bobinho.steams.listeners.ChatListener;
 import fr.bobinho.steams.listeners.TeamListener;
 import fr.bobinho.steams.utils.settings.BSettings;
 import fr.bobinho.steams.utils.team.TeamManager;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.platform.PlayerAdapter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import javax.annotation.Nonnull;
 
@@ -20,6 +24,7 @@ public class sTeamsCore extends JavaPlugin {
      */
     private static sTeamsCore instance;
     private static BSettings teamsSettings;
+    private static PlayerAdapter<Player> luckperm;
 
     /**
      * Gets the sutils core instance
@@ -41,6 +46,9 @@ public class sTeamsCore extends JavaPlugin {
         return teamsSettings;
     }
 
+    public static PlayerAdapter<Player>  getLuckPerm() {
+        return luckperm;
+    }
     /**
      * Enable and initialize the plugin
      */
@@ -55,7 +63,7 @@ public class sTeamsCore extends JavaPlugin {
 
         //Registers files settings
         teamsSettings = new BSettings("teams");
-
+        luckperm = LuckPermsProvider.get().getPlayerAdapter(Player.class);
         TeamManager.loadTeams();
     }
 

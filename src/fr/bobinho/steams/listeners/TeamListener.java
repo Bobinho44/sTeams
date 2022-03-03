@@ -57,13 +57,13 @@ public class TeamListener implements Listener {
 
             //Checks if friendly fire is off
             if (e.isCancelled()) {
-                e.getDamager().sendMessage(ChatColor.YELLOW + "Watch out! That’s your teammate.");
+                e.getDamager().sendMessage(ChatColor.RED + "You cannot hurt + " + ChatColor.WHITE + e.getEntity().getName() + ".");
             }
         }
 
         //Checks if attacker and victim are ally
         else if (TeamManager.areAllied(victimTeam, attackerTeam)) {
-            e.getDamager().sendMessage(ChatColor.YELLOW + "Watch out! That’s your ally " + ChatColor.GRAY + victimTeam.getName() + ChatColor.YELLOW + ".");
+            e.getDamager().sendMessage(ChatColor.YELLOW + "Watch out! That’s your ally " + ChatColor.BLUE + victimTeam.getName() + ChatColor.YELLOW + ".");
         }
     }
 

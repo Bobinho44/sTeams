@@ -68,8 +68,10 @@ public class TeamManager {
         Validate.notNull(name, "name is null");
         Validate.isTrue(isItTeam(name), "name is not used");
 
-        getTeam(name).get().getMembers().keySet().stream().collect(Collectors.toList()).forEach(member -> leaveTeam(getTeam(name).get(), member));
-        getTeams().remove(getTeam(name).get());
+        Team team = getTeam(name).get();
+        team.getMembers().keySet().stream().collect(Collectors.toList()).forEach(member -> leaveTeam(team, member));
+        team.getAllies().stream().collect(Collectors.toList()).forEach(ally -> deleteAlly(team, ally));
+        getTeams().remove(team);
     }
 
     public static void joinTeam(@Nonnull Team team, @Nonnull UUID member) {
@@ -241,6 +243,15 @@ public class TeamManager {
         Validate.notNull(player, "player is null");
 
         return team.getMembers().keySet().stream().anyMatch(member -> member.equals(player));
+    }
+
+    public static boolean areTeammate(@Nonnull UUID player1, @Nonnull UUID player2) {
+        Validate.notNull(player1, "player1 is null");
+        Validate.notNull(player2, "player2 is null");
+
+        Optional<Team> team1 = getTeam(player1);
+        Optional<Team> team2 = getTeam(player1);
+        return team1.isPresent() && team2.isPresent() && team1.get().equals(team2.get());
     }
 
     public static List<Player> getPlayers(@Nonnull UUID basePlayer, @Nonnull Chat chat) {
