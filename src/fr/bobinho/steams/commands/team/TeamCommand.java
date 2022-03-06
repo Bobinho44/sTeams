@@ -602,29 +602,6 @@ public class TeamCommand extends BaseCommand {
     }
 
     /**
-     * Command team info
-     *
-     * @param commandSender the sender
-     */
-    @Syntax("/teams <Info/Show> <PlayerName>")
-    @Subcommand("Info|Show")
-    @CommandPermission("steams.team.info")
-    public void onTeamInfoPLayerCommand(CommandSender commandSender, @Single Pla commandTarget) {
-        if (!(commandSender instanceof Player)) {
-            return;
-        }
-        Player sender = (Player) commandSender;
-
-        if (!TeamManager.isItTeam(commandTarget)) {
-            sender.sendMessage(ChatColor.RED + "The " + commandTarget + " team does not exist!");
-            return;
-        }
-
-        //Sends message
-        sender.sendMessage(TeamManager.getTeam(commandTarget).get().getInformations(sender.getUniqueId()));
-    }
-
-    /**
      * Command team friendlyfire
      *
      * @param commandSender the sender

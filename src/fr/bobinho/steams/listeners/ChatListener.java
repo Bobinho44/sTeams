@@ -39,12 +39,12 @@ public class ChatListener implements Listener {
         List<Player> viewers = TeamManager.getPlayers(e.getPlayer().getUniqueId(), chat);
         String chatPrefix = chat.getPrefix();
         String prefix = sTeamsCore.getLuckPerm().getUser(e.getPlayer()).getCachedData().getMetaData().getPrefix();
-        String player = TeamManager.getPlayerRoleSymbol(e.getPlayer().getUniqueId()) + e.getPlayer().getName();
+        String player = (chat == Chat.PUBLIC ? "" : TeamManager.getPlayerRoleSymbol(e.getPlayer().getUniqueId())) + e.getPlayer().getName();
         String message = ChatColor.translateAlternateColorCodes('&', LegacyComponentSerializer.legacyAmpersand().serialize(e.message()));
         viewers.forEach(viewer -> viewer.sendMessage(chatPrefix +
                 getTeamAsString(TeamManager.getTeam(e.getPlayer().getUniqueId()), viewer) + ChatColor.RESET +
                 (prefix == null ? "" : ChatColor.translateAlternateColorCodes('&', prefix) + " ") +
-                (chat == Chat.PUBLIC ? "" : (chat == Chat.ALLY ? ChatColor.GRAY : ChatColor.BLUE)) +
+                (chat == Chat.PUBLIC ? "" : (chat == Chat.ALLY ? ChatColor.BLUE : ChatColor.DARK_GREEN)) +
                 player + " : " +
                 message));
     }

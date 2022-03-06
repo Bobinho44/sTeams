@@ -57,7 +57,8 @@ public class TeamListener implements Listener {
 
             //Checks if friendly fire is off
             if (e.isCancelled()) {
-                e.getDamager().sendMessage(ChatColor.RED + "You cannot hurt + " + ChatColor.WHITE + e.getEntity().getName() + ".");
+                e.getDamager().sendMessage(ChatColor.RED + "You cannot hurt + " + ChatColor.WHITE + e.getEntity().getName() + ".\n" +
+                        ChatColor.RED + "Friendly fire is disabled between " + ChatColor.WHITE + "Team Members!");
             }
         }
 
