@@ -16,7 +16,7 @@ public class Team {
     private final Map<UUID, TeamRole> members = new HashMap<>();
     private final List<Team> allies = new ArrayList<>();
     private Location HQ;
-    private boolean isFriendlyFire = false;
+    private boolean isFriendlyFire = true;
 
     public Team(@Nonnull String name, @Nonnull UUID leader) {
         Validate.notNull(name, "name is null");

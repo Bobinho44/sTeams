@@ -69,8 +69,8 @@ public class TeamManager {
         Validate.isTrue(isItTeam(name), "name is not used");
 
         Team team = getTeam(name).get();
-        team.getMembers().keySet().stream().collect(Collectors.toList()).forEach(member -> leaveTeam(team, member));
-        team.getAllies().stream().collect(Collectors.toList()).forEach(ally -> deleteAlly(team, ally));
+        new ArrayList<>(team.getMembers().keySet()).forEach(member -> leaveTeam(team, member));
+        new ArrayList<>(team.getAllies()).forEach(ally -> deleteAlly(team, ally));
         getTeams().remove(team);
     }
 
