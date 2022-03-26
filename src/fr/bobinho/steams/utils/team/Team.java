@@ -12,11 +12,11 @@ import java.util.stream.Collectors;
 
 public class Team {
 
-    private final String name;
+    private String name;
     private final Map<UUID, TeamRole> members = new HashMap<>();
     private final List<Team> allies = new ArrayList<>();
     private Location HQ;
-    private boolean isFriendlyFire = true;
+    private boolean isFriendlyFire = false;
 
     public Team(@Nonnull String name, @Nonnull UUID leader) {
         Validate.notNull(name, "name is null");
@@ -34,6 +34,10 @@ public class Team {
 
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Map<UUID, TeamRole> getMembers() {
@@ -121,6 +125,7 @@ public class Team {
         getMembers().keySet().stream().filter(member -> Bukkit.getPlayer(member) != null).collect(Collectors.toList())
                 .forEach(member -> Objects.requireNonNull(Bukkit.getPlayer(member)).sendMessage(message));
     }
+
     /**
      * {@inheritDoc}
      */

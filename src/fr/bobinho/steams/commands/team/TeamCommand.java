@@ -3,6 +3,7 @@ package fr.bobinho.steams.commands.team;
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.*;
 import co.aikar.commands.bukkit.contexts.OnlinePlayer;
+import fr.bobinho.steams.sTeamsCore;
 import fr.bobinho.steams.utils.team.Team;
 import fr.bobinho.steams.utils.team.TeamManager;
 import fr.bobinho.steams.utils.team.TeamRole;
@@ -25,7 +26,7 @@ public class TeamCommand extends BaseCommand {
      * @param commandSender the sender
      */
     @Default
-    @Syntax("/teams Help")
+    @Syntax("/team Help")
     @Subcommand("Help")
     @CommandPermission("steams.team.help")
     public void onTeamHelpCommand(CommandSender commandSender) {
@@ -50,7 +51,8 @@ public class TeamCommand extends BaseCommand {
                 ChatColor.GOLD + "/Team <Info/Show> <TeamName> " + ChatColor.AQUA + " - " + ChatColor.GREEN + " Show basic info of team.\n" +
                 ChatColor.GOLD + "/Team FriendlyFire " + ChatColor.AQUA + " - " + ChatColor.GREEN + " Toggles team friendly fire. (Mod)\n" +
                 ChatColor.GOLD + "/Team Kick <Player> " + ChatColor.AQUA + " - " + ChatColor.GREEN + " Kick player from your team. (Mod)\n" +
-                ChatColor.GOLD + "/Team Disband " + ChatColor.AQUA + " - " + ChatColor.GREEN + " Disband your team. (Leader)\n");
+                ChatColor.GOLD + "/Team Disband " + ChatColor.AQUA + " - " + ChatColor.GREEN + " Disband your team. (Leader)\n" +
+                ChatColor.GOLD + "/Team Rename <TeamName> " + ChatColor.AQUA + " - " + ChatColor.GREEN + " Rename your team. (Leader)\n");
     }
 
     /**
@@ -58,10 +60,10 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams Create <TeamName>")
+    @Syntax("/team Create <TeamName>")
     @Subcommand("Create")
     @CommandPermission("steams.team.create")
-    public void onTeamCreateCommand(CommandSender commandSender, @Single String name) {
+    public void onTeamCreateCommand(CommandSender commandSender, String name) {
         if (!(commandSender instanceof Player)) {
             return;
         }
@@ -74,8 +76,14 @@ public class TeamCommand extends BaseCommand {
         }
 
         //Checks if the name is valid
-        if (name.length() < 2) {
+        if (name.replaceAll(" ","").length() < 3) {
             sender.sendMessage(ChatColor.RED + "The name " + name + " is to short!");
+            return;
+        }
+
+        //Checks if the name is allowed
+        if (sTeamsCore.getMainSettings().getConfiguration().getStringList("TeamNameNotAllowed").contains(name.toLowerCase())) {
+            sender.sendMessage(ChatColor.RED + name + " is not an allowed name!");
             return;
         }
 
@@ -97,8 +105,9 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams Promote <Player>")
+    @Syntax("/team Promote <Player>")
     @Subcommand("Promote")
+    @CommandCompletion("@players")
     @CommandPermission("steams.team.promote")
     public void onTeamPromoteCommand(CommandSender commandSender, @Single OnlinePlayer commandTarget) {
         if (!(commandSender instanceof Player)) {
@@ -152,8 +161,9 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams Demote <Player>")
+    @Syntax("/team Demote <Player>")
     @Subcommand("Demote")
+    @CommandCompletion("@players")
     @CommandPermission("steams.team.demote")
     public void onTeamDemoteCommand(CommandSender commandSender, @Single OnlinePlayer commandTarget) {
         if (!(commandSender instanceof Player)) {
@@ -207,7 +217,7 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams SetHQ")
+    @Syntax("/team SetHQ")
     @Subcommand("SetHQ")
     @CommandPermission("steams.team.sethq")
     public void onTeamSetHQCommand(CommandSender commandSender) {
@@ -241,7 +251,7 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams HQ")
+    @Syntax("/team HQ")
     @Subcommand("HQ")
     @CommandPermission("steams.team.hq")
     public void onTeamHQCommand(CommandSender commandSender) {
@@ -271,8 +281,9 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams Invite <Player>")
+    @Syntax("/team Invite <Player>")
     @Subcommand("Invite")
+    @CommandCompletion("@players")
     @CommandPermission("steams.team.invite")
     public void onTeamInviteCommand(CommandSender commandSender, @Single OnlinePlayer commandTarget) {
         if (!(commandSender instanceof Player)) {
@@ -321,7 +332,7 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams Join <TeamName>")
+    @Syntax("/team Join <TeamName>")
     @Subcommand("Join")
     @CommandPermission("steams.team.join")
     public void onTeamJoinCommand(CommandSender commandSender, @Single String commandTarget) {
@@ -363,7 +374,7 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams Leave")
+    @Syntax("/team Leave")
     @Subcommand("Leave")
     @CommandPermission("steams.team.leave")
     public void onTeamLeaveCommand(CommandSender commandSender) {
@@ -400,7 +411,7 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams Ally <TeamName>")
+    @Syntax("/team Ally <TeamName>")
     @Subcommand("Ally")
     @CommandPermission("steams.team.ally")
     public void onTeamAllyCommand(CommandSender commandSender, @Single String commandTarget) {
@@ -472,7 +483,7 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams Unally <TeamName>")
+    @Syntax("/team Unally <TeamName>")
     @Subcommand("Unally")
     @CommandPermission("steams.team.unally")
     public void onTeamUnallyCommand(CommandSender commandSender, @Single String commandTarget) {
@@ -520,7 +531,7 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams Chat [public/ally/team]")
+    @Syntax("/team Chat [public/ally/team]")
     @Subcommand("Chat")
     @CommandPermission("steams.team.chat")
     public void onTeamChatCommand(CommandSender commandSender, @Optional String commandTarget) {
@@ -565,7 +576,7 @@ public class TeamCommand extends BaseCommand {
         ChatManager.setPlayerChat(sender.getUniqueId(), chat);
 
         //Sends message
-        sender.sendMessage(ChatColor.GREEN + "You are now on the " + chat.getName() + ChatColor.GREEN + " chat");
+        sender.sendMessage(ChatColor.GREEN + "You are now in " + chat.getName() + ChatColor.GREEN + " chat.");
 
     }
 
@@ -574,8 +585,9 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams <Info/Show> <TeamName>")
+    @Syntax("/team <Info/Show> <TeamName>")
     @Subcommand("Info|Show")
+    @CommandCompletion("@players")
     @CommandPermission("steams.team.info")
     public void onTeamInfoCommand(CommandSender commandSender, @Single String commandTarget) {
         if (!(commandSender instanceof Player)) {
@@ -590,7 +602,7 @@ public class TeamCommand extends BaseCommand {
             return;
         }
 
-        if (!TeamManager.isInTeam(target.getUniqueId()) && target != null) {
+        if (target != null && !TeamManager.isInTeam(target.getUniqueId())) {
             sender.sendMessage(ChatColor.RED + target.getName() + " doesn't have a team!");
             return;
         }
@@ -606,7 +618,7 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams FriendlyFire")
+    @Syntax("/team FriendlyFire")
     @Subcommand("FriendlyFire")
     @CommandPermission("steams.team.friendlyfire")
     public void onTeamFriendlyFireCommand(CommandSender commandSender) {
@@ -639,15 +651,21 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams Kick <Player>")
+    @Syntax("/team Kick <Player>")
     @Subcommand("Kick")
+    @CommandCompletion("@players")
     @CommandPermission("steams.team.demote")
-    public void onTeamKickCommand(CommandSender commandSender, @Single OnlinePlayer commandTarget) {
+    public void onTeamKickCommand(CommandSender commandSender, @Single String commandTarget) {
         if (!(commandSender instanceof Player)) {
             return;
         }
         Player sender = (Player) commandSender;
-        Player target = commandTarget.getPlayer();
+        OfflinePlayer target = Bukkit.getOfflinePlayerIfCached(commandTarget);
+
+        if (!TeamManager.isItTeam(commandTarget) && target == null) {
+            sender.sendMessage(ChatColor.RED + "The " + commandTarget + " team does not exist!");
+            return;
+        }
 
         //Checks if sender have team
         if (!TeamManager.isInTeam(sender.getUniqueId())) {
@@ -685,7 +703,10 @@ public class TeamCommand extends BaseCommand {
 
         //Sends message
         team.sendMessage(ChatColor.GREEN + target.getName() + " has been excluded from the team.");
-        target.sendMessage(ChatColor.RED + "You have been excluded from the " + team.getName() + " team!");
+
+        if (Bukkit.getPlayer(target.getUniqueId()) != null) {
+            Bukkit.getPlayer(target.getUniqueId()).sendMessage(ChatColor.RED + "You have been excluded from the " + team.getName() + " team!");
+        }
     }
 
     /**
@@ -693,7 +714,7 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams Disband")
+    @Syntax("/team Disband")
     @Subcommand("Disband")
     @CommandPermission("steams.team.disband")
     public void onTeamDisbandCommand(CommandSender commandSender) {
@@ -717,39 +738,61 @@ public class TeamCommand extends BaseCommand {
         Team team = TeamManager.getTeam(sender.getUniqueId()).get();
 
         //Sends message
-        team.sendMessage(ChatColor.RED + "Your team has been disbanded");
+        team.sendMessage(ChatColor.RED + "Your team has been disbanded!");
 
         //Deletes team
         TeamManager.deleteTeam(team.getName());
     }
 
     /**
-     * Command team disband
+     * Command team rename
      *
      * @param commandSender the sender
      */
-    @Syntax("/teams Forcedisband")
-    @Subcommand("Forcedisband")
-    @CommandPermission("steams.team.forcedisband")
-    public void onTeamForceDisbandCommand(CommandSender commandSender, @Single String commandTarget) {
+    @Syntax("/team Rename <TeamName>")
+    @Subcommand("Rename")
+    @CommandPermission("steams.team.rename")
+    public void onTeamRenameCommand(CommandSender commandSender, String name) {
         if (!(commandSender instanceof Player)) {
             return;
         }
         Player sender = (Player) commandSender;
 
-        //Checks if the team exist
-        if (!TeamManager.isItTeam(commandTarget)) {
-            sender.sendMessage(ChatColor.RED + "The " + commandTarget + " team does not exist!");
+        //Checks if sender have team
+        if (!TeamManager.isInTeam(sender.getUniqueId())) {
+            sender.sendMessage(ChatColor.RED + "You are not in a team!");
             return;
         }
 
-        Team target = TeamManager.getTeam(commandTarget).get();
+        //Checks if the sender is a leader of his team
+        if (!TeamManager.isAtLeastLeader(sender.getUniqueId())) {
+            sender.sendMessage(ChatColor.RED + "You are not the leader of your team!");
+            return;
+        }
+
+        //Checks if the name is valid
+        if (name.replaceAll(" ","").length() < 3) {
+            sender.sendMessage(ChatColor.RED + "The name " + name + " is to short!");
+            return;
+        }
+
+        //Checks if the name is allowed
+        if (sTeamsCore.getMainSettings().getConfiguration().getStringList("TeamNameNotAllowed").contains(name.toLowerCase())) {
+            sender.sendMessage(ChatColor.RED + name + " is not an allowed name!");
+            return;
+        }
+
+        //Checks if name is use
+        if (TeamManager.isItTeam(name)) {
+            sender.sendMessage(ChatColor.RED + "The name " + name + " is already use!");
+            return;
+        }
+
+        //Creates the team
+        TeamManager.changeTeamName(TeamManager.getTeam(sender.getUniqueId()).get(), name);
 
         //Sends message
-        target.sendMessage(ChatColor.RED + "Your team has been disbanded");
-        sender.sendMessage(ChatColor.GREEN + "You have disbanded the " + commandTarget + "team.");
-
-        //Deletes team
-        TeamManager.deleteTeam(commandTarget);
+        sender.sendMessage(ChatColor.GREEN + "you have renamed your team to " + name + ".");
     }
+
 }

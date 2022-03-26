@@ -7,7 +7,6 @@ import fr.bobinho.steams.utils.team.chat.Chat;
 import fr.bobinho.steams.utils.team.chat.ChatManager;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.luckperms.api.LuckPermsProvider;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -38,14 +37,29 @@ public class ChatListener implements Listener {
 
         List<Player> viewers = TeamManager.getPlayers(e.getPlayer().getUniqueId(), chat);
         String chatPrefix = chat.getPrefix();
-        String prefix = sTeamsCore.getLuckPerm().getUser(e.getPlayer()).getCachedData().getMetaData().getPrefix();
+        String prefix = (chat == Chat.PUBLIC ? sTeamsCore.getLuckPerm().getUser(e.getPlayer()).getCachedData().getMetaData().getPrefix() : null);
         String player = (chat == Chat.PUBLIC ? "" : TeamManager.getPlayerRoleSymbol(e.getPlayer().getUniqueId())) + e.getPlayer().getName();
-        String message = ChatColor.translateAlternateColorCodes('&', LegacyComponentSerializer.legacyAmpersand().serialize(e.message()));
+        String message = e.getPlayer().hasPermission("steams.chatcolor") ? ChatColor.translateAlternateColorCodes('&', LegacyComponentSerializer.legacyAmpersand().serialize(e.message())) : LegacyComponentSerializer.legacyAmpersand().serialize(e.message());
         viewers.forEach(viewer -> viewer.sendMessage(chatPrefix +
                 getTeamAsString(TeamManager.getTeam(e.getPlayer().getUniqueId()), viewer) + ChatColor.RESET +
-                (prefix == null ? "" : ChatColor.translateAlternateColorCodes('&', prefix) + " ") +
+                (prefix == null ? "" : ChatColor.translateAlternateColorCodes('&', getHexPrefix(prefix))) +
                 (chat == Chat.PUBLIC ? "" : (chat == Chat.ALLY ? ChatColor.BLUE : ChatColor.DARK_GREEN)) +
-                player + " : " +
-                message));
+                player + ": " +
+                (chat == Chat.PUBLIC ? (ChatColor.WHITE + message) : message)));
     }
+
+    private String getHexPrefix(String prefix) {
+        StringBuilder hexPrefix = new StringBuilder();
+        for (int i = 0; i < prefix.length(); i++) {
+            if (prefix.charAt(i) == '#') {
+                hexPrefix.append(net.md_5.bungee.api.ChatColor.of(prefix.substring(i, i + 7)).toString());
+                i = i + 7;
+            }
+            else {
+                hexPrefix.append(prefix.charAt(i));
+            }
+        }
+        return hexPrefix.toString();
+    }
+
 }

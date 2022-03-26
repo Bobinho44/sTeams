@@ -23,6 +23,7 @@ public class sTeamsCore extends JavaPlugin {
      * Fields
      */
     private static sTeamsCore instance;
+    private static BSettings mainSettings;
     private static BSettings teamsSettings;
     private static PlayerAdapter<Player> luckperm;
 
@@ -34,6 +35,16 @@ public class sTeamsCore extends JavaPlugin {
     @Nonnull
     public static sTeamsCore getInstance() {
         return instance;
+    }
+
+    /**
+     * Gets the main settings
+     *
+     * @return the main settings
+     */
+    @Nonnull
+    public static BSettings getMainSettings() {
+        return mainSettings;
     }
 
     /**
@@ -62,8 +73,10 @@ public class sTeamsCore extends JavaPlugin {
         registerListeners();
 
         //Registers files settings
+        mainSettings = new BSettings("settings");
         teamsSettings = new BSettings("teams");
         luckperm = LuckPermsProvider.get().getPlayerAdapter(Player.class);
+
         TeamManager.loadTeams();
     }
 

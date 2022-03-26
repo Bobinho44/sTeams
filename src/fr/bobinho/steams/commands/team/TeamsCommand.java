@@ -1,10 +1,9 @@
 package fr.bobinho.steams.commands.team;
 
 import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.CommandAlias;
-import co.aikar.commands.annotation.CommandPermission;
-import co.aikar.commands.annotation.Default;
-import co.aikar.commands.annotation.Syntax;
+import co.aikar.commands.annotation.*;
+import fr.bobinho.steams.utils.team.Team;
+import fr.bobinho.steams.utils.team.TeamManager;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -43,6 +42,36 @@ public class TeamsCommand extends BaseCommand {
                 ChatColor.GOLD + "/Team FriendlyFire " + ChatColor.AQUA + " - " + ChatColor.GREEN + " Toggles team friendly fire. (Mod)\n" +
                 ChatColor.GOLD + "/Team Kick <Player> " + ChatColor.AQUA + " - " + ChatColor.GREEN + " Kick player from your team. (Mod)\n" +
                 ChatColor.GOLD + "/Team Disband " + ChatColor.AQUA + " - " + ChatColor.GREEN + " Disband your team. (Leader)\n");
+    }
+
+    /**
+     * Command team forcedisband
+     *
+     * @param commandSender the sender
+     */
+    @Syntax("/teams Forcedisband")
+    @Subcommand("Forcedisband")
+    @CommandPermission("steams.team.forcedisband")
+    public void onTeamForceDisbandCommand(CommandSender commandSender, @Single String commandTarget) {
+        if (!(commandSender instanceof Player)) {
+            return;
+        }
+        Player sender = (Player) commandSender;
+
+        //Checks if the team exist
+        if (!TeamManager.isItTeam(commandTarget)) {
+            sender.sendMessage(ChatColor.RED + "The " + commandTarget + " team does not exist!");
+            return;
+        }
+
+        Team target = TeamManager.getTeam(commandTarget).get();
+
+        //Sends message
+        target.sendMessage(ChatColor.RED + "Your team has been disbanded!");
+        sender.sendMessage(ChatColor.GREEN + "You have disbanded the " + commandTarget + "team.");
+
+        //Deletes team
+        TeamManager.deleteTeam(commandTarget);
     }
 
 }

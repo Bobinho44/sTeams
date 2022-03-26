@@ -47,6 +47,7 @@
                 <directory>src/resources</directory>
                 <includes>
                     <include>plugin.yml</include>
+                    <include>settings.yml</include>
                     <include>teams.yml</include>
                 </includes>
             </resource>

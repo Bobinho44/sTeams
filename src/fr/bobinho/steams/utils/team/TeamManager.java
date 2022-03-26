@@ -74,6 +74,14 @@ public class TeamManager {
         getTeams().remove(team);
     }
 
+    public static void changeTeamName(@Nonnull Team team, @Nonnull String newName) {
+        Validate.notNull(team, "team is null");
+        Validate.notNull(newName, "newName is null");
+        Validate.isTrue(!isItTeam(newName), "newName is already used");
+
+        team.setName(newName);
+    }
+
     public static void joinTeam(@Nonnull Team team, @Nonnull UUID member) {
         Validate.notNull(team, "team is null");
         Validate.notNull(member, "member is null");
@@ -249,9 +257,7 @@ public class TeamManager {
         Validate.notNull(player1, "player1 is null");
         Validate.notNull(player2, "player2 is null");
 
-        Optional<Team> team1 = getTeam(player1);
-        Optional<Team> team2 = getTeam(player1);
-        return team1.isPresent() && team2.isPresent() && team1.get().equals(team2.get());
+        return isInTeam(player1) && getTeam(player1).get().getMembers().containsKey(player2);
     }
 
     public static List<Player> getPlayers(@Nonnull UUID basePlayer, @Nonnull Chat chat) {
@@ -279,8 +285,10 @@ public class TeamManager {
         for (String teamName : configuration.getKeys(false)) {
 
             Team team = createTeam(teamName);
-            for (String memberUUID : Objects.requireNonNull(configuration.getConfigurationSection(teamName + ".members")).getKeys(false)) {
-                team.addMember(UUID.fromString(memberUUID), TeamRole.valueOf(configuration.getString(teamName + ".members." + memberUUID)));
+            if (configuration.getConfigurationSection(teamName + ".members") != null) {
+                for (String memberUUID : Objects.requireNonNull(configuration.getConfigurationSection(teamName + ".members")).getKeys(false)) {
+                    team.addMember(UUID.fromString(memberUUID), TeamRole.valueOf(configuration.getString(teamName + ".members." + memberUUID)));
+                }
             }
             if (configuration.getString(teamName + ".HQ") != null) {
                 team.setHQ(BLocationUtil.getAsLocation(configuration.getString(teamName + ".HQ", "world:0:0:0:0:0")));
