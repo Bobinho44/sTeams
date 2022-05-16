@@ -32,6 +32,10 @@ public class ChatListener implements Listener {
 
     @EventHandler
     public void onPlayerSendMessage(AsyncChatEvent e) {
+        if (e.isCancelled()) {
+            return;
+        }
+
         e.setCancelled(true);
         Chat chat = ChatManager.getPlayerChat(e.getPlayer().getUniqueId());
 

@@ -161,6 +161,17 @@ public class TeamManager {
         return getPlayerRole(promoted) != TeamRole.CO_LEADER && getPlayerRole(promoter).getLevel() > getPlayerRole(promoted).getLevel();
     }
 
+    public static void setLeader(@Nonnull UUID promoted) {
+        Validate.notNull(promoted, "promoter is null");
+        Validate.isTrue(isInTeam(promoted), "promoted is not in a team");
+
+        getTeam(promoted).get().getMembers().entrySet().stream()
+                .filter(member -> member.getValue() == TeamRole.LEADER)
+                .map(Map.Entry::getKey).findFirst()
+                .ifPresent(leader -> getTeam(promoted).get().addMember(leader, TeamRole.CO_LEADER));
+        getTeam(promoted).get().addMember(promoted, TeamRole.LEADER);
+    }
+
     public static void promote(@Nonnull UUID promoted) {
         Validate.notNull(promoted, "promoter is null");
         Validate.isTrue(isInTeam(promoted), "promoted is not in a team");
@@ -233,12 +244,6 @@ public class TeamManager {
         team2.removeAlly(team1);
     }
 
-    public static void toogleFriendlyFire(@Nonnull Team team) {
-        Validate.notNull(team, "team is null");
-
-        team.toogleFriendlyFire();
-    }
-
     public static boolean isAllied(@Nonnull Team team, @Nonnull UUID player) {
         Validate.notNull(team, "team is null");
         Validate.notNull(player, "player is null");
@@ -293,9 +298,6 @@ public class TeamManager {
             if (configuration.getString(teamName + ".HQ") != null) {
                 team.setHQ(BLocationUtil.getAsLocation(configuration.getString(teamName + ".HQ", "world:0:0:0:0:0")));
             }
-            if (configuration.getBoolean(teamName + ".isFriendlyFire")) {
-                team.toogleFriendlyFire();
-            }
         }
 
         for (Team team : getTeams()) {
@@ -326,9 +328,6 @@ public class TeamManager {
 
             //Saves HQ
             configuration.set(team.getName() + ".HQ", team.getHQ() == null ? null : BLocationUtil.getAsString(team.getHQ()));
-
-            //Saves friendly fire statue
-            configuration.set(team.getName() + ".isFriendlyFire", team.isFriendlyFire());
         }
 
         sTeamsCore.getTeamsSettings().save();

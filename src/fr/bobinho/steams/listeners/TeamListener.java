@@ -54,13 +54,9 @@ public class TeamListener implements Listener {
 
         //Checks if attacker and victim are teammate
         if (victimTeam.equals(attackerTeam)) {
-
-            //Checks if friendly fire is off
-            if (!victimTeam.isFriendlyFire()) {
-                e.setCancelled(true);
-                e.getDamager().sendMessage(ChatColor.RED + "You cannot hurt + " + ChatColor.WHITE + e.getEntity().getName() + ".\n" +
-                        ChatColor.RED + "Friendly fire is disabled between " + ChatColor.WHITE + "Team Members!");
-            }
+            e.setCancelled(true);
+            e.getDamager().sendMessage(ChatColor.RED + "You cannot hurt + " + ChatColor.WHITE + e.getEntity().getName() + ".\n" +
+                    ChatColor.RED + "Friendly fire is disabled between " + ChatColor.WHITE + "Team Members!");
         }
 
         //Checks if attacker and victim are ally
@@ -80,13 +76,9 @@ public class TeamListener implements Listener {
 
         //Checks if attacker and victim are teammate
         if (victimTeam.equals(attackerTeam)) {
-
-            //Checks if friendly fire is off
-            if (!victimTeam.isFriendlyFire()) {
-                e.setCancelled(true);
-                ((Player) e.getEntity().getShooter()).sendMessage(ChatColor.RED + "You cannot hurt + " + ChatColor.WHITE + e.getEntity().getName() + ".\n" +
-                        ChatColor.RED + "Friendly fire is disabled between " + ChatColor.WHITE + "Team Members!");
-            }
+            e.setCancelled(true);
+            ((Player) e.getEntity().getShooter()).sendMessage(ChatColor.RED + "You cannot hurt + " + ChatColor.WHITE + e.getEntity().getName() + ".\n" +
+                    ChatColor.RED + "Friendly fire is disabled between " + ChatColor.WHITE + "Team Members!");
         }
 
         //Checks if attacker and victim are ally

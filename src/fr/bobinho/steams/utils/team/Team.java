@@ -16,7 +16,6 @@ public class Team {
     private final Map<UUID, TeamRole> members = new HashMap<>();
     private final List<Team> allies = new ArrayList<>();
     private Location HQ;
-    private boolean isFriendlyFire = false;
 
     public Team(@Nonnull String name, @Nonnull UUID leader) {
         Validate.notNull(name, "name is null");
@@ -88,14 +87,6 @@ public class Team {
 
     public void setHQ(Location HQ) {
         this.HQ = HQ;
-    }
-
-    public boolean isFriendlyFire() {
-        return isFriendlyFire;
-    }
-
-    public void toogleFriendlyFire() {
-        this.isFriendlyFire = !isFriendlyFire;
     }
 
     public String getInformations(@Nonnull UUID requester) {
