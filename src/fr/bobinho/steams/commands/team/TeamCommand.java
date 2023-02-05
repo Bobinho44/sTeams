@@ -10,15 +10,37 @@ import fr.bobinho.steams.utils.team.TeamRole;
 import fr.bobinho.steams.utils.team.chat.Chat;
 import fr.bobinho.steams.utils.team.chat.ChatManager;
 import fr.bobinho.steams.utils.team.request.RequestManager;
-import fr.bobinho.sutils.utils.teleportation.sUtilsTeleportation;
+import net.william278.huskhomes.api.HuskHomesAPI;
+import net.william278.huskhomes.player.OnlineUser;
+import net.william278.huskhomes.position.Position;
+import net.william278.huskhomes.position.Server;
+import net.william278.huskhomes.position.World;
+import net.william278.huskhomes.teleport.TimedTeleport;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 @CommandAlias("team|t")
 public class TeamCommand extends BaseCommand {
+
+    private final HuskHomesAPI huskHomesAPI = HuskHomesAPI.getInstance();
+
+    // This teleports a player to 128, 64, 128 on the server "server"
+    public void teleportPlayer(Player player, Location location) {
+        OnlineUser user = huskHomesAPI.adaptUser(player);
+
+        Position position = new Position(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch(),
+                new World("world", location.getWorld().getUID()),
+                new Server());
+
+        huskHomesAPI.teleportBuilder(user)
+                .setTarget(position)
+                .toTimedTeleport()
+                .thenAccept(TimedTeleport::execute);
+    }
 
     /**
      * Command team help
@@ -41,11 +63,13 @@ public class TeamCommand extends BaseCommand {
                 ChatColor.GOLD + "/Team Demote <Player>" + ChatColor.AQUA + " - " + ChatColor.GREEN + " Demotes player in your team. (Co-Leader)\n" +
                 ChatColor.GOLD + "/Team SetHQ" + ChatColor.AQUA + " - " + ChatColor.GREEN + " Sets team's HQ warp. (Co-Leader)\n" +
                 ChatColor.GOLD + "/Team HQ" + ChatColor.AQUA + " - " + ChatColor.GREEN + " Teleport to team HQ warp.\n" +
+                ChatColor.GOLD + "/Team Desc <TeamDesc>" + ChatColor.AQUA + " - " + ChatColor.GREEN + " Sets team's description. (Co-Leader)\n" +
                 ChatColor.GOLD + "/Team Invite <Player>" + ChatColor.AQUA + " - " + ChatColor.GREEN + " Invites player to your team. (Mod)\n" +
                 ChatColor.GOLD + "/Team Join <TeamName>" + ChatColor.AQUA + " - " + ChatColor.GREEN + " Join team.\n" +
                 ChatColor.GOLD + "/Team Leave" + ChatColor.AQUA + " - " + ChatColor.GREEN + " Leave your team..\n" +
                 ChatColor.GOLD + "/Team Ally <TeamName>" + ChatColor.AQUA + " - " + ChatColor.GREEN + " Request/accept allyship. (Mod)\n" +
-                ChatColor.GOLD + "/Team Unally <TeamName>" + ChatColor.AQUA + " - " + ChatColor.GREEN + " remove ally. (Co-Leader)\n" +
+                ChatColor.GOLD + "/Team Enemy <TeamName>" + ChatColor.AQUA + " - " + ChatColor.GREEN + " Add enemy. (Mod)\n" +
+                ChatColor.GOLD + "/Team Neutral <TeamName>" + ChatColor.AQUA + " - " + ChatColor.GREEN + " Request/accept neutralship. (Co-Leader)\n" +
                 ChatColor.GOLD + "/Team Chat" + ChatColor.AQUA + " - " + ChatColor.GREEN + " Toggle between chat modes\n" +
                 ChatColor.GOLD + "/Team Chat <public/ally/team>" + ChatColor.AQUA + " - " + ChatColor.GREEN + " Toggle a specific chat\n" +
                 ChatColor.GOLD + "/Team <Info/Show> <TeamName> " + ChatColor.AQUA + " - " + ChatColor.GREEN + " Show basic info of team.\n" +
@@ -272,7 +296,7 @@ public class TeamCommand extends BaseCommand {
         }
 
         //Teleports sender
-        sUtilsTeleportation.teleport(sender, TeamManager.getHQ(sender.getUniqueId()));
+        teleportPlayer(sender, TeamManager.getHQ(sender.getUniqueId()));
     }
 
     /**
@@ -390,7 +414,7 @@ public class TeamCommand extends BaseCommand {
 
         //Checks if the sender is the leader
         if (TeamManager.isAtLeastLeader(sender.getUniqueId()) || TeamManager.isAlone(sender.getUniqueId())) {
-            onTeamDisbandCommand(sender);
+            sender.sendMessage(ChatColor.RED + "You cannot leave your team because you are the owner. Do " + ChatColor.YELLOW + "/team disband " + ChatColor.RED + "to disband your team.");
             return;
         }
 
@@ -411,29 +435,33 @@ public class TeamCommand extends BaseCommand {
      * @param commandSender the sender
      */
     @Syntax("/team Ally <TeamName>")
+    @CommandCompletion("@players")
     @Subcommand("Ally")
     @CommandPermission("steams.team.ally")
     public void onTeamAllyCommand(CommandSender commandSender, @Single String commandTarget) {
         if (!(commandSender instanceof Player)) {
             return;
         }
+
         Player sender = (Player) commandSender;
 
-        //Checks if sender have team
-        if (!TeamManager.isInTeam(sender.getUniqueId())) {
-            sender.sendMessage(ChatColor.RED + "You are not in a team!");
-            return;
-        }
+        OfflinePlayer TeamTarget = Bukkit.getOfflinePlayerIfCached(commandTarget);
 
-        if (!TeamManager.isItTeam(commandTarget)) {
+        if (!TeamManager.isItTeam(commandTarget) && TeamTarget == null) {
             sender.sendMessage(ChatColor.RED + "The " + commandTarget + " team does not exist!");
             return;
         }
 
-        TeamManager.getTeam(sender.getUniqueId()).ifPresent(team -> {
-            TeamManager.getTeam(commandTarget).ifPresent(target -> {
+        if (TeamTarget != null && !TeamManager.isInTeam(TeamTarget.getUniqueId())) {
+            sender.sendMessage(ChatColor.RED + TeamTarget.getName() + " doesn't have a team!");
+            return;
+        }
 
-                if (team.equals(target)) {
+        Team target = (TeamManager.isItTeam(commandTarget) ? TeamManager.getTeam(commandTarget) : TeamManager.getTeam(TeamTarget.getUniqueId())).get();
+
+        TeamManager.getTeam(sender.getUniqueId()).ifPresent(team -> {
+
+            if (team.equals(target)) {
                     sender.sendMessage(ChatColor.RED + "You cannot be allied with your own team!");
                     return;
                 }
@@ -474,6 +502,91 @@ public class TeamCommand extends BaseCommand {
                 sender.sendMessage(ChatColor.GREEN + "You have sent an alliance request to the " + target.getName() + " team.");
                 target.sendMessage(ChatColor.GREEN + "You have received an alliance request from the " + team.getName() + " team.");
             });
+    }
+
+    /**
+     * Command team ally
+     *
+     * @param commandSender the sender
+     */
+    @Syntax("/team Neutral <TeamName>")
+    @CommandCompletion("@players")
+    @Subcommand("Neutral")
+    @CommandPermission("steams.team.neutral")
+    public void onTeamNeutralCommand(CommandSender commandSender, @Single String commandTarget) {
+        if (!(commandSender instanceof Player)) {
+            return;
+        }
+
+        Player sender = (Player) commandSender;
+
+        OfflinePlayer TeamTarget = Bukkit.getOfflinePlayerIfCached(commandTarget);
+
+        if (!TeamManager.isItTeam(commandTarget) && TeamTarget == null) {
+            sender.sendMessage(ChatColor.RED + "The " + commandTarget + " team does not exist!");
+            return;
+        }
+
+        if (TeamTarget != null && !TeamManager.isInTeam(TeamTarget.getUniqueId())) {
+            sender.sendMessage(ChatColor.RED + TeamTarget.getName() + " doesn't have a team!");
+            return;
+        }
+
+        Team target = (TeamManager.isItTeam(commandTarget) ? TeamManager.getTeam(commandTarget) : TeamManager.getTeam(TeamTarget.getUniqueId())).get();
+
+        TeamManager.getTeam(sender.getUniqueId()).ifPresent(team -> {
+
+            if (team.equals(target)) {
+                sender.sendMessage(ChatColor.RED + "You cannot be neutral with your own team!");
+                return;
+            }
+
+            //Checks if sender is at least a co leader
+            if (!TeamManager.isAtLeastCoLeader(sender.getUniqueId())) {
+                sender.sendMessage(ChatColor.RED + "You are not at least the co-leader of your team!");
+                return;
+            }
+
+            //Checks if teams are allied or enemy
+            if (!TeamManager.areAllied(team, target) && !TeamManager.areEnemy(team, target)) {
+                sender.sendMessage(ChatColor.RED + "You are already neutral with the " + target.getName() + " team!");
+                return;
+            }
+
+            if (TeamManager.areAllied(team, target)) {
+                //Sends message
+                team.sendMessage(ChatColor.GREEN + "You are no longer allied with the " + target.getName() + " team.");
+                target.sendMessage(ChatColor.GREEN + "You are no longer allied with the " + team.getName() + " team.");
+
+                //Deletes team
+                TeamManager.deleteAlly(team, target);
+                return;
+            }
+
+            //Checks if team already send a neutral request to target
+            if (RequestManager.hasNeutralRequest(team, target)) {
+                sender.sendMessage(ChatColor.RED + "You have already sent a neutral invitation to the " + target.getName() + " team!");
+                return;
+            }
+
+            //Checks if team has a neutral request from target
+            if (RequestManager.hasNeutralRequest(target, team)) {
+
+                //Sends message
+                team.sendMessage(ChatColor.GREEN + "You are now neutral with the " + target.getName() + " team.");
+                target.sendMessage(ChatColor.GREEN + "You are now neutral with the " + team.getName() + " team.");
+
+                //Accepts join request
+                RequestManager.acceptNeutralRequest(target, team);
+                return;
+            }
+
+            //Sends neutral request
+            RequestManager.sendNeutralRequest(team, target);
+
+            //Sends message
+            sender.sendMessage(ChatColor.GREEN + "You have sent a neutral request to the " + target.getName() + " team.");
+            target.sendMessage(ChatColor.GREEN + "You have received a neutral request from the " + team.getName() + " team.");
         });
     }
 
@@ -482,47 +595,52 @@ public class TeamCommand extends BaseCommand {
      *
      * @param commandSender the sender
      */
-    @Syntax("/team Unally <TeamName>")
-    @Subcommand("Unally")
-    @CommandPermission("steams.team.unally")
-    public void onTeamUnallyCommand(CommandSender commandSender, @Single String commandTarget) {
+    @Syntax("/team Enemy <TeamName>")
+    @CommandCompletion("@players")
+    @Subcommand("Enemy")
+    @CommandPermission("steams.team.enemy")
+    public void onTeamEnemyCommand(CommandSender commandSender, @Single String commandTarget) {
         if (!(commandSender instanceof Player)) {
             return;
         }
+
         Player sender = (Player) commandSender;
 
-        //Checks if sender have team
-        if (!TeamManager.isInTeam(sender.getUniqueId())) {
-            sender.sendMessage(ChatColor.RED + "You are not in a team!");
-            return;
-        }
+        OfflinePlayer TeamTarget = Bukkit.getOfflinePlayerIfCached(commandTarget);
 
-        if (!TeamManager.isItTeam(commandTarget)) {
+        if (!TeamManager.isItTeam(commandTarget) && TeamTarget == null) {
             sender.sendMessage(ChatColor.RED + "The " + commandTarget + " team does not exist!");
             return;
         }
 
-        Team team = TeamManager.getTeam(sender.getUniqueId()).get();
-        Team target = TeamManager.getTeam(commandTarget).get();
-
-        //Checks if the sender is the leader
-        if (!TeamManager.isAtLeastCoLeader(sender.getUniqueId())) {
-            sender.sendMessage(ChatColor.RED + "You are not at least the co-leader of your team!");
+        if (TeamTarget != null && !TeamManager.isInTeam(TeamTarget.getUniqueId())) {
+            sender.sendMessage(ChatColor.RED + TeamTarget.getName() + " doesn't have a team!");
             return;
         }
 
-        //Checks if teams are allied
-        if (!TeamManager.areAllied(team, target)) {
-            sender.sendMessage(ChatColor.RED + "You are not allied with the " + target.getName() + " team!");
-            return;
-        }
+        Team target = (TeamManager.isItTeam(commandTarget) ? TeamManager.getTeam(commandTarget) : TeamManager.getTeam(TeamTarget.getUniqueId())).get();
 
-        //Sends message
-        team.sendMessage(ChatColor.GREEN + "You are no longer allied with the " + target.getName() + " team.");
-        target.sendMessage(ChatColor.GREEN + "You are no longer allied with the " + team.getName() + " team.");
+        TeamManager.getTeam(sender.getUniqueId()).ifPresent(team -> {
 
-        //Deletes team
-        TeamManager.deleteAlly(team, target);
+            //Checks if the sender is the leader
+            if (!TeamManager.isAtLeastMod(sender.getUniqueId())) {
+                sender.sendMessage(ChatColor.RED + "You are not at least the mod of your team!");
+                return;
+            }
+
+            //Checks if teams are allied
+            if (TeamManager.areEnemy(team, target)) {
+                sender.sendMessage(ChatColor.RED + "You are already enemy with the " + target.getName() + " team!");
+                return;
+            }
+
+            //Sends message
+            team.sendMessage(ChatColor.GREEN + "You are now enemy with the " + target.getName() + " team.");
+            target.sendMessage(ChatColor.GREEN + "You are now enemy with the " + team.getName() + " team.");
+
+            //Set enemy
+            TeamManager.createEnemy(team, target);
+        });
     }
 
     /**
@@ -798,6 +916,39 @@ public class TeamCommand extends BaseCommand {
 
         //Sends message
         TeamManager.getTeam(sender.getUniqueId()).get().sendMessage(ChatColor.GREEN + target.getName() + " is the new leader of your team!");
+    }
+
+    /**
+     * Command team rename
+     *
+     * @param commandSender the sender
+     */
+    @Syntax("/team desc <desc>")
+    @Subcommand("desc")
+    @CommandPermission("steams.team.desc")
+    public void onTeamDescCommand(CommandSender commandSender, String desc) {
+        if (!(commandSender instanceof Player)) {
+            return;
+        }
+        Player sender = (Player) commandSender;
+
+        //Checks if sender have team
+        if (!TeamManager.isInTeam(sender.getUniqueId())) {
+            sender.sendMessage(ChatColor.RED + "You are not in a team!");
+            return;
+        }
+
+        //Checks if the sender is a leader of his team
+        if (!TeamManager.isAtLeastCoLeader(sender.getUniqueId())) {
+            sender.sendMessage(ChatColor.RED + "You are not at least the co-leader of your team!");
+            return;
+        }
+
+        //Sets the new leader
+        TeamManager.changeTeamDescription(TeamManager.getTeam(sender.getUniqueId()).get(), desc);
+
+        //Sends message
+        TeamManager.getTeam(sender.getUniqueId()).get().sendMessage(ChatColor.GREEN + "The team description has been changed! (" + ChatColor.translateAlternateColorCodes('&', desc) + ChatColor.GREEN + ")");
     }
 
 }

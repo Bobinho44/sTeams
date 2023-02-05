@@ -71,6 +71,7 @@ public class TeamManager {
         Team team = getTeam(name).get();
         new ArrayList<>(team.getMembers().keySet()).forEach(member -> leaveTeam(team, member));
         new ArrayList<>(team.getAllies()).forEach(ally -> deleteAlly(team, ally));
+        new ArrayList<>(team.getEnemies()).forEach(ally -> deleteEnemy(team, ally));
         getTeams().remove(team);
     }
 
@@ -80,6 +81,13 @@ public class TeamManager {
         Validate.isTrue(!isItTeam(newName), "newName is already used");
 
         team.setName(newName);
+    }
+
+    public static void changeTeamDescription(@Nonnull Team team, @Nonnull String newDescription) {
+        Validate.notNull(team, "team is null");
+        Validate.notNull(newDescription, "newDescription is null");
+
+        team.setDescription(newDescription);
     }
 
     public static void joinTeam(@Nonnull Team team, @Nonnull UUID member) {
@@ -226,6 +234,13 @@ public class TeamManager {
         return team1.getAllies().stream().anyMatch(ally -> ally.equals(team2));
     }
 
+    public static boolean areAllied(@Nonnull UUID player1, @Nonnull UUID player2) {
+        Validate.notNull(player1, "player1 is null");
+        Validate.notNull(player2, "player2 is null");
+
+        return isInTeam(player1) && isInTeam(player2) && isAllied(getTeam(player1).get(), player2);
+    }
+
     public static void createAlly(@Nonnull Team team1, @Nonnull Team team2) {
         Validate.notNull(team1, "team1 is null");
         Validate.notNull(team2, "team2 is null");
@@ -233,6 +248,10 @@ public class TeamManager {
 
         team1.addAlly(team2);
         team2.addAlly(team1);
+
+        if (areEnemy(team1, team2)) {
+            deleteEnemy(team1, team2);
+        }
     }
 
     public static void deleteAlly(@Nonnull Team team1, @Nonnull Team team2) {
@@ -249,6 +268,49 @@ public class TeamManager {
         Validate.notNull(player, "player is null");
 
         return team.getAllies().stream().map(Team::getMembers).anyMatch(members -> members.keySet().stream().anyMatch(member -> member.equals(player)));
+    }
+
+    public static boolean isEnnemies(@Nonnull Team team, @Nonnull UUID player) {
+        Validate.notNull(team, "team is null");
+        Validate.notNull(player, "player is null");
+
+        return team.getEnemies().stream().map(Team::getMembers).anyMatch(members -> members.keySet().stream().anyMatch(member -> member.equals(player)));
+    }
+
+    public static boolean areEnemy(@Nonnull UUID player1, @Nonnull UUID player2) {
+        Validate.notNull(player1, "player1 is null");
+        Validate.notNull(player2, "player2 is null");
+
+        return isInTeam(player1) && isInTeam(player2) && isEnnemies(getTeam(player1).get(), player2);
+    }
+
+    public static boolean areEnemy(@Nonnull Team team1, @Nonnull Team team2) {
+        Validate.notNull(team1, "team1 is null");
+        Validate.notNull(team2, "team2 is null");
+
+        return team1.getEnemies().stream().anyMatch(enemy -> enemy.equals(team2));
+    }
+
+    public static void createEnemy(@Nonnull Team team1, @Nonnull Team team2) {
+        Validate.notNull(team1, "team1 is null");
+        Validate.notNull(team2, "team2 is null");
+        Validate.isTrue(!areEnemy(team1, team2), "teams are already enemy");
+
+        team1.addEnemy(team2);
+        team2.addEnemy(team1);
+
+        if (areAllied(team1, team2)) {
+            deleteAlly(team1, team2);
+        }
+    }
+
+    public static void deleteEnemy(@Nonnull Team team1, @Nonnull Team team2) {
+        Validate.notNull(team1, "team1 is null");
+        Validate.notNull(team2, "team2 is null");
+        Validate.isTrue(areEnemy(team1, team2), "teams are not enemy");
+
+        team1.removeEnemy(team2);
+        team2.removeEnemy(team1);
     }
 
     public static boolean isTeammate(@Nonnull Team team, @Nonnull UUID player) {
@@ -298,6 +360,9 @@ public class TeamManager {
             if (configuration.getString(teamName + ".HQ") != null) {
                 team.setHQ(BLocationUtil.getAsLocation(configuration.getString(teamName + ".HQ", "world:0:0:0:0:0")));
             }
+            if (configuration.getString(teamName + ".desc") != null) {
+                team.setDescription(configuration.getString(teamName + ".desc"));
+            }
         }
 
         for (Team team : getTeams()) {
@@ -325,6 +390,9 @@ public class TeamManager {
 
             //Saves allies
             configuration.set(team.getName() + ".allies", team.getAllies().stream().map(Team::getName).collect(Collectors.toList()));
+
+            //Saves desc
+            configuration.set(team.getName() + ".desc", team.getDescription());
 
             //Saves HQ
             configuration.set(team.getName() + ".HQ", team.getHQ() == null ? null : BLocationUtil.getAsString(team.getHQ()));

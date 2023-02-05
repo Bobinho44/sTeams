@@ -27,7 +27,11 @@ public class ChatListener implements Listener {
             return ChatColor.DARK_GREEN + "[" + team.get().getName() + "] ";
         }
 
-        return team.map(value -> ChatColor.RED + "[" + value.getName() + "] ").orElse("");
+        if (team.isPresent() && TeamManager.isEnnemies(team.get(), viewer.getUniqueId())) {
+            return ChatColor.RED + "[" + team.get().getName() + "] ";
+        }
+
+        return team.map(value -> ChatColor.WHITE + "[" + value.getName() + "] ").orElse("");
     }
 
     @EventHandler

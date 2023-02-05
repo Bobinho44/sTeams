@@ -23,6 +23,11 @@ public class RequestManager {
     private static final List<AllyRequest> allyRequests = new ArrayList<>();
 
     /**
+     * The neutral requests list
+     */
+    private static final List<NeutralRequest> neutralRequests = new ArrayList<>();
+
+    /**
      * Gets all join request
      *
      * @return all join requests
@@ -38,6 +43,15 @@ public class RequestManager {
      */
     private static List<AllyRequest> getAllyRequests() {
         return allyRequests;
+    }
+
+    /**
+     * Gets all neutral request
+     *
+     * @return all neutral requests
+     */
+    private static List<NeutralRequest> getNeutralRequests() {
+        return neutralRequests;
     }
 
     /**
@@ -69,6 +83,20 @@ public class RequestManager {
     }
 
     /**
+     * Gets a specific neutral request
+     *
+     * @param receiver the neutral receiver
+     * @return the neutral request if found
+     */
+    private static Optional<NeutralRequest> getNeutralRequest(@Nonnull Team sender, @Nonnull Team receiver) {
+        Validate.notNull(sender, "sender is null");
+        Validate.notNull(receiver, "receiver is null");
+
+        //Gets the ally request
+        return getNeutralRequests().stream().filter(request -> request.getReceiver().equals(receiver) && request.getSender().equals(sender)).findFirst();
+    }
+
+    /**
      * Checks if the player has join request
      *
      * @param receiver the receiver
@@ -95,6 +123,19 @@ public class RequestManager {
     }
 
     /**
+     * Checks if the player has neutral request
+     *
+     * @param receiver the receiver
+     * @return if he has neutral request
+     */
+    public static boolean hasNeutralRequest(@Nonnull Team sender, @Nonnull Team receiver) {
+        Validate.notNull(sender, "sender is null");
+        Validate.notNull(receiver, "receiver is null");
+
+        return getNeutralRequest(sender, receiver).isPresent();
+    }
+
+    /**
      * Sends a join request
      *
      * @param sender   the sender
@@ -110,7 +151,7 @@ public class RequestManager {
     }
 
     /**
-     * Sends a ally request
+     * Sends an ally request
      *
      * @param sender   the sender
      * @param receiver the receiver
@@ -122,6 +163,21 @@ public class RequestManager {
 
         //Creates the ally request
         getAllyRequests().add(new AllyRequest(sender, receiver));
+    }
+
+    /**
+     * Sends a neutral request
+     *
+     * @param sender   the sender
+     * @param receiver the receiver
+     */
+    public static void sendNeutralRequest(@Nonnull Team sender, @Nonnull Team receiver) {
+        Validate.notNull(sender, "senderUuid is null");
+        Validate.notNull(receiver, "receiver is null");
+        Validate.isTrue(!hasNeutralRequest(sender, receiver), "receiver already have an invitation");
+
+        //Creates the ally request
+        getNeutralRequests().add(new NeutralRequest(sender, receiver));
     }
 
     /**
@@ -140,7 +196,7 @@ public class RequestManager {
     }
 
     /**
-     * Removes a ally request
+     * Removes an ally request
      *
      * @param sender   the sender
      * @param receiver the receiver
@@ -152,6 +208,21 @@ public class RequestManager {
 
         //Removes the ally request
         getAllyRequests().remove(getAllyRequest(sender, receiver).get());
+    }
+
+    /**
+     * Removes a neutral request
+     *
+     * @param sender   the sender
+     * @param receiver the receiver
+     */
+    public static void removeNeutralRequest(@Nonnull Team sender, @Nonnull Team receiver) {
+        Validate.notNull(sender, "sender is null");
+        Validate.notNull(receiver, "receiver is null");
+        Validate.isTrue(hasNeutralRequest(sender, receiver), "receiver dont have any request");
+
+        //Removes the ally request
+        getNeutralRequests().remove(getNeutralRequest(sender, receiver).get());
     }
 
     /**
@@ -183,6 +254,21 @@ public class RequestManager {
         //Accepts the ally request
         TeamManager.createAlly(sender, receiver);
         removeAllyRequest(sender, receiver);
+    }
+
+    /**
+     * Accepts a neutral request
+     *
+     * @param receiver the receiver
+     */
+    public static void acceptNeutralRequest(@Nonnull Team sender, @Nonnull Team receiver) {
+        Validate.notNull(sender, "sender is null");
+        Validate.notNull(receiver, "receiver is null");
+        Validate.isTrue(hasNeutralRequest(sender, receiver), "receiver dont have any request");
+
+        //Accepts the neutral request
+        TeamManager.deleteEnemy(sender, receiver);
+        removeNeutralRequest(sender, receiver);
     }
 
 }
